@@ -1,0 +1,26 @@
+{
+    "name": "grantedbyme/grantedbyme",
+    "authors": [
+        {
+            "name": "GrantedByMe",
+            "email": "info@grantedby.me",
+            "homepage": "https://grantedby.me"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "GBM\\": "src/GBM/"
+        }
+    },
+    "repositories": [
+        {
+            "type": "git",
+            "url": "https://github.com/phpseclib/phpseclib"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.2",
+        "phpseclib/phpseclib": "dev-master"
+    },
+    "minimum-stability": "dev"
+}
