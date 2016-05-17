@@ -21,7 +21,7 @@ namespace GBM {
      * @package  GBM
      * @author   GrantedByMe <info@grantedby.me>
      * @access   private
-     * @license  https://grantedby.me/licenses/php/license.md MIT
+     * @license  https://raw.githubusercontent.com/grantedbyme/grantedbyme-php-sdk/master/LICENSE MIT
      * @version  Release: <release_id>
      * @link     https://grantedby.me
      */
