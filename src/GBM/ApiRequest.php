@@ -363,6 +363,30 @@ namespace GBM {
         }
 
         /**
+         * Return session state
+         *
+         * @param string $token TBD
+         *
+         * @return array
+         * @throws ApiRequestException
+         */
+        public function revokeSessionToken($token)
+        {
+            if (!self::isValidString($token)) {
+                throw new ApiRequestException('invalid parameters in getSessionState()');
+            }
+            $params = $this->getDefaultParams();
+            $params['token'] = htmlspecialchars(trim($token));
+            if (isset($_SERVER['HTTP_USER_AGENT'])) {
+                $params['http_user_agent'] = $_SERVER['HTTP_USER_AGENT'];
+            }
+            if (isset($_SERVER['REMOTE_ADDR'])) {
+                $params['remote_addr'] = $_SERVER['REMOTE_ADDR'];
+            }
+            return $this->apiCall($params, 'revoke_session_token');
+        }
+
+        /**
          * Do API call
          *
          * @param array $params TBD
