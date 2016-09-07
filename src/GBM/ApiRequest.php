@@ -339,6 +339,14 @@ namespace GBM {
         }
 
         /**
+         * @deprecated Use getTokenState
+         */
+        public function getSessionState($token)
+        {
+            return $this->getTokenState($token);
+        }
+
+        /**
          * Return session state
          *
          * @param string $token TBD
@@ -346,10 +354,10 @@ namespace GBM {
          * @return array
          * @throws ApiRequestException
          */
-        public function getSessionState($token)
+        public function getTokenState($token)
         {
             if (!self::isValidString($token)) {
-                throw new ApiRequestException('invalid parameters in getSessionState()');
+                throw new ApiRequestException('invalid parameters in getTokenState()');
             }
             $params = $this->getDefaultParams();
             $params['token'] = htmlspecialchars(trim($token));
@@ -361,7 +369,6 @@ namespace GBM {
             }
             return $this->apiCall($params, 'get_session_state');
         }
-
         /**
          * Return session state
          *
@@ -373,7 +380,7 @@ namespace GBM {
         public function revokeSessionToken($token)
         {
             if (!self::isValidString($token)) {
-                throw new ApiRequestException('invalid parameters in getSessionState()');
+                throw new ApiRequestException('invalid parameters in revokeSessionToken()');
             }
             $params = $this->getDefaultParams();
             $params['token'] = htmlspecialchars(trim($token));

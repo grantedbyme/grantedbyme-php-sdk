@@ -27,7 +27,7 @@ namespace GBM {
      */
     class ApiSettings
     {
-        public static $VERSION = '1.0.2';
+        public static $VERSION = '1.0.3';
         public static $BRANCH = 'master';
         public static $HOST = 'https://api.grantedby.me/v1/service/';
     }
