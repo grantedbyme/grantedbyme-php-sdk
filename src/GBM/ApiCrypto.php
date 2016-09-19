@@ -230,7 +230,7 @@ namespace GBM {
          * Encrypts an Array using signed RSA encryption and optional signed AES encryption
          * for inputs longer than the allowed RSA key space
          *
-         * @param string $data The input array to encrypt
+         * @param array|string $data The input array to encrypt
          * @return bool|string
          */
         public function encrypt_json($data)
@@ -267,7 +267,7 @@ namespace GBM {
         /**
          * TBD
          *
-         * @param string $data TBD
+         * @param array|string $data TBD
          * @return bool|mixed
          * @throws ApiCryptoException
          */

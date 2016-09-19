@@ -67,7 +67,7 @@ namespace GBM {
         ////////////////////////////////////////
 
         /**
-         * TBD
+         * ServiceKey string
          *
          * @var string
          * @access private
@@ -75,7 +75,7 @@ namespace GBM {
         private $service_key;
 
         /**
-         * TBD
+         * Config object
          *
          * @var array
          * @access private
@@ -83,7 +83,7 @@ namespace GBM {
         private $config;
 
         /**
-         * TBD
+         * Crypto instance
          *
          * @var mixed
          * @access private
@@ -167,7 +167,7 @@ namespace GBM {
         }
 
         /**
-         * Get activation public key
+         * Initiate key exchange for encrypted communication.
          *
          * @return array
          * @throws ApiRequestException
@@ -195,31 +195,28 @@ namespace GBM {
         }
 
         /**
-         * Activate a service
+         * Active pending service using service key.
          *
-         * @param string $service_key TBD
-         * @param string $grantor TBD
+         * @param string $service_key The activation service key
          *
          * @return array
          * @throws ApiRequestException
          */
-        public function activateService($service_key, $grantor)
+        public function activateService($service_key)
         {
-            if (!self::isValidString($service_key) || !self::isValidString($grantor)) {
+            if (!self::isValidString($service_key)) {
                 throw new ApiRequestException('invalid parameters in activateService()');
             }
             // sanitize
             $service_key = htmlspecialchars(trim($service_key));
-            $grantor = htmlspecialchars(trim($grantor));
             // set service key for default headers
             $this->service_key = $service_key;
             // generate RSA key pair
             $keypair = $this->crypto->generateKeyPair();
             $handshake = $this->activateHandshake($keypair['public_key']);
             // set default headers
-            $params = $this->getDefaultParams();
+            $params = $this->getParams();
             $params['service_key'] = $service_key;
-            $params['grantor'] = $grantor;
             // do api call
             $response = $this->apiCall($params, 'activate_service');
             // check for valid response
@@ -237,166 +234,143 @@ namespace GBM {
         }
 
         /**
-         * Deactivate a service
+         * Links a service user account with a GrantedByMe account.
+         *
+         * @param string $challenge The challenge used to verify the user
+         * @param string $authenticator_secret The secret used for user authentication
          *
          * @return array
          * @throws ApiRequestException
          */
-        public function deactivateService()
+        public function linkAccount($challenge, $authenticator_secret)
         {
-            $params = $this->getDefaultParams();
-            return $this->apiCall($params, 'deactivate_service');
-        }
-
-        /**
-         * Links Users Service account with a GBM User account
-         *
-         * @param string $token TBD
-         * @param string $grantor TBD
-         *
-         * @return array
-         * @throws ApiRequestException
-         */
-        public function linkAccount($token, $grantor)
-        {
-            if (!self::isValidString($token) || !self::isValidString($grantor)) {
+            if (!self::isValidString($challenge) || !self::isValidString($authenticator_secret)) {
                 throw new ApiRequestException('invalid parameters in linkAccount()');
             }
-            $params = $this->getDefaultParams();
-            $params['token'] = htmlspecialchars(trim($token));
-            $params['grantor'] = htmlspecialchars(trim($grantor));
+            $params = $this->getParams();
+            $params['challenge'] = $challenge;
+            $params['authenticator_secret'] = $authenticator_secret;
             return $this->apiCall($params, 'link_account');
         }
 
         /**
-         * Unlinks Users Service account with a GBM User account
+         * Un-links a service user account with a GrantedByMe account.
          *
-         * @param string $grantor TBD
+         * @param string $authenticator_secret The secret used for user authentication
          *
          * @return array
          * @throws ApiRequestException
          */
-        public function unlinkAccount($grantor)
+        public function unlinkAccount($authenticator_secret)
         {
-            if (!self::isValidString($grantor)) {
+            if (!self::isValidString($authenticator_secret)) {
                 throw new ApiRequestException('invalid parameters in unlinkAccount()');
             }
-            $params = $this->getDefaultParams();
-            $params['grantor'] = hash('sha512', htmlspecialchars(trim($grantor)));
+            $params = $this->getParams();
+            $params['authenticator_secret'] = $authenticator_secret;
             return $this->apiCall($params, 'unlink_account');
         }
 
         /**
-         * Returns an account migration token
+         * Returns a challenge with required type.
          *
+         * @param int $challenge_type The type of requested challenge
          * @return array
          * @throws ApiRequestException
          */
-        public function getAccountToken()
+        public function getChallenge($challenge_type)
         {
-            return $this->getToken(\GBM\ApiRequest::$TOKEN_ACCOUNT);
+            $params = $this->getExtendedParams();
+            $params['challenge_type'] = $challenge_type;
+            return $this->apiCall($params, 'get_challenge');
         }
 
         /**
-         * Returns an account authentication token
-         *
-         * @return array
-         * @throws ApiRequestException
+         * @deprecated Use getChallenge
          */
-        public function getSessionToken()
+        public function getToken($challenge_type)
         {
-            return $this->getToken(\GBM\ApiRequest::$TOKEN_SESSION);
+            return $this->getChallenge($challenge_type);
         }
 
         /**
-         * Returns an account registration token
+         * Returns a challenge state.
+         *
+         * @param string $challenge The challenge to check
          *
          * @return array
          * @throws ApiRequestException
          */
-        public function getRegisterToken()
+        public function getChallengeState($challenge)
         {
-            return $this->getToken(\GBM\ApiRequest::$TOKEN_ACTIVATE);
+            if (!self::isValidString($challenge)) {
+                throw new ApiRequestException('invalid parameters in getChallengeState()');
+            }
+            $params = $this->getExtendedParams();
+            $params['challenge'] = $challenge;
+            return $this->apiCall($params, 'get_challenge_state');
         }
 
         /**
-         * Returns a new token by type
+         * @deprecated Use getChallengeState
+         */
+        public function getTokenState($challenge)
+        {
+            return $this->getChallengeState($challenge);
+        }
+
+        /**
+         * Notify the GrantedByMe server about the user has been logged out from the service.
+         *
+         * @param string $challenge The challenge representing an active authentication session
          *
          * @return array
          * @throws ApiRequestException
          */
-        public function getToken($token_type)
+        public function revokeChallenge($challenge)
         {
-            $params = $this->getDefaultParams();
-            $params['token_type'] = $token_type;
+            if (!self::isValidString($challenge)) {
+                throw new ApiRequestException('invalid parameters in revokeChallenge()');
+            }
+            $params = $this->getParams();
+            $params['challenge'] = $challenge;
+            return $this->apiCall($params, 'revoke_challenge');
+        }
+
+        /**
+         * Returns the default HTTP parameters.
+         *
+         * @return array
+         */
+        public function getParams()
+        {
+            $params = array();
+            $params['timestamp'] = time();
+            return $params;
+        }
+
+        /**
+         * Returns the default HTTP parameters including IP address and User-Agent.
+         *
+         * @return array
+         */
+        public function getExtendedParams()
+        {
+            $params = $this->getParams();
             if (isset($_SERVER['HTTP_USER_AGENT'])) {
                 $params['http_user_agent'] = $_SERVER['HTTP_USER_AGENT'];
             }
             if (isset($_SERVER['REMOTE_ADDR'])) {
                 $params['remote_addr'] = $_SERVER['REMOTE_ADDR'];
             }
-            return $this->apiCall($params, 'get_session_token');
+            return $params;
         }
 
         /**
-         * @deprecated Use getTokenState
-         */
-        public function getSessionState($token)
-        {
-            return $this->getTokenState($token);
-        }
-
-        /**
-         * Return session state
+         * Sends a HTTP (POST) API request.
          *
-         * @param string $token TBD
-         *
-         * @return array
-         * @throws ApiRequestException
-         */
-        public function getTokenState($token)
-        {
-            if (!self::isValidString($token)) {
-                throw new ApiRequestException('invalid parameters in getTokenState()');
-            }
-            $params = $this->getDefaultParams();
-            $params['token'] = htmlspecialchars(trim($token));
-            if (isset($_SERVER['HTTP_USER_AGENT'])) {
-                $params['http_user_agent'] = $_SERVER['HTTP_USER_AGENT'];
-            }
-            if (isset($_SERVER['REMOTE_ADDR'])) {
-                $params['remote_addr'] = $_SERVER['REMOTE_ADDR'];
-            }
-            return $this->apiCall($params, 'get_session_state');
-        }
-        /**
-         * Return session state
-         *
-         * @param string $token TBD
-         *
-         * @return array
-         * @throws ApiRequestException
-         */
-        public function revokeSessionToken($token)
-        {
-            if (!self::isValidString($token)) {
-                throw new ApiRequestException('invalid parameters in revokeSessionToken()');
-            }
-            $params = $this->getDefaultParams();
-            $params['token'] = htmlspecialchars(trim($token));
-            if (isset($_SERVER['HTTP_USER_AGENT'])) {
-                $params['http_user_agent'] = $_SERVER['HTTP_USER_AGENT'];
-            }
-            if (isset($_SERVER['REMOTE_ADDR'])) {
-                $params['remote_addr'] = $_SERVER['REMOTE_ADDR'];
-            }
-            return $this->apiCall($params, 'revoke_session_token');
-        }
-
-        /**
-         * Do API call
-         *
-         * @param array $params TBD
+         * @param array $params The request parameter object
+         * @param string $operation The API operation name
          *
          * @return array
          * @throws ApiRequestException
@@ -442,20 +416,6 @@ namespace GBM {
         }
 
         /**
-         * Returns the default request parameters
-         *
-         * @param string $function TBD
-         *
-         * @return array
-         */
-        public function getDefaultParams()
-        {
-            $params = array();
-            $params['timestamp'] = time();
-            return $params;
-        }
-
-        /**
          * Validates a json input
          *
          * @param string $data The input data to validate
@@ -483,13 +443,23 @@ namespace GBM {
         }
 
         /**
-         * Returns a fixed length (128) secure random token
+         * Generates a secure random authenticator secret.
          *
          * @return string
          */
-        public static function getRandomToken()
+        public static function generateAuthenticatorSecret()
         {
             return \GBM\ApiCrypto::randomString(64);
+        }
+
+        /**
+         * Generates hash digest of an authenticator secret.
+         * @param string $authenticatorSecret The authenticator secret to hash
+         * @return string
+         */
+        public static function hashAuthenticatorSecret($authenticatorSecret)
+        {
+            return hash('sha512', \GBM\ApiCrypto::normalizeString($authenticatorSecret));
         }
 
         /**
