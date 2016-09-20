@@ -51,16 +51,9 @@ namespace GBM {
         // Two Factor Auth. Mode, Both Needed
         public static $MODE_2FA_STRICT = 4;
 
-        // TBD
         public static $TOKEN_ACCOUNT = 1;
-        // TBD
         public static $TOKEN_SESSION = 2;
-        // TBD
-        public static $TOKEN_AUTHORIZE = 3;
-        // TBD
         public static $TOKEN_ACTIVATE = 4;
-        // TBD
-        public static $TOKEN_DEACTIVATE = 5;
 
         ////////////////////////////////////////
         // Private Variables
@@ -234,6 +227,17 @@ namespace GBM {
         }
 
         /**
+         * Deactivates a service for reactivation.
+         *
+         * @return array
+         */
+        public function deactivateService()
+        {
+            $params = $this->getParams();
+            return $this->apiCall($params, 'deactivate_service');
+        }
+
+        /**
          * Links a service user account with a GrantedByMe account.
          *
          * @param string $challenge The challenge used to verify the user
@@ -387,29 +391,29 @@ namespace GBM {
             //print_r($encrypted_request);
             // Send request with encrypted content
             $url = $this->getApiUrl() . $operation . '/';
-            $response = CurlRequest::post($url, $encrypted_request);
+            $plain_response = CurlRequest::post($url, $encrypted_request);
             // Validate response
-            if (!$response || empty($response)) {
+            if (!$plain_response || empty($plain_response)) {
                 throw new ApiRequestException('Empty response');
             }
-            if (!self::isValidJSON($response)) {
-                throw new ApiRequestException('Data format error: ' . $response);
+            if (!self::isValidJSON($plain_response)) {
+                throw new ApiRequestException('Data format error: ' . $plain_response);
             }
             // Serialize response JSON string to array
-            $response = json_decode($response, true);
+            $response = json_decode($plain_response, true);
             // Validate array for required fields
             if (!isset($response['payload']) || !isset($response['signature'])) {
-                throw new ApiRequestException('Missing encrypted fields');
+                throw new ApiRequestException('Missing encrypted fields: ' . $plain_response);
             }
             // Decrypt from array
             $response = $this->crypto->decrypt_json($response);
             // validate decoded response
             if (!is_array($response) || !isset($response['success'])) {
-                throw new ApiRequestException('Invalid response content: ' . $response);
+                throw new ApiRequestException('Invalid response content: ' . $plain_response);
             }
             // force error code from server in case of failure
             if (($response['success']) != true && !isset($response['error'])) {
-                throw new ApiRequestException('Invalid response content: ' . $response);
+                throw new ApiRequestException('Invalid response content: ' . $plain_response);
             }
             // return result
             return $response;
