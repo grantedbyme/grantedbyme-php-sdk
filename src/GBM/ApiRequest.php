@@ -60,14 +60,6 @@ namespace GBM {
         ////////////////////////////////////////
 
         /**
-         * ServiceKey string
-         *
-         * @var string
-         * @access private
-         */
-        private $service_key;
-
-        /**
          * Config object
          *
          * @var array
@@ -202,8 +194,6 @@ namespace GBM {
             }
             // sanitize
             $service_key = htmlspecialchars(trim($service_key));
-            // set service key for default headers
-            $this->service_key = $service_key;
             // generate RSA key pair
             $keypair = $this->crypto->generateKeyPair();
             $handshake = $this->activateHandshake($keypair['public_key']);
@@ -218,23 +208,10 @@ namespace GBM {
                     $response['server_key'] = $handshake['public_key'];
                     $response = array_merge($response, $params, $keypair);
                 }
-            } else {
-                $this->service_key = false;
             }
             //print_r($response);
             // return result
             return $response;
-        }
-
-        /**
-         * Deactivates a service for reactivation.
-         *
-         * @return array
-         */
-        public function deactivateService()
-        {
-            $params = $this->getParams();
-            return $this->apiCall($params, 'deactivate_service');
         }
 
         /**
@@ -255,24 +232,6 @@ namespace GBM {
             $params['challenge'] = $challenge;
             $params['authenticator_secret'] = $authenticator_secret;
             return $this->apiCall($params, 'link_account');
-        }
-
-        /**
-         * Un-links a service user account with a GrantedByMe account.
-         *
-         * @param string $authenticator_secret The secret used for user authentication
-         *
-         * @return array
-         * @throws ApiRequestException
-         */
-        public function unlinkAccount($authenticator_secret)
-        {
-            if (!self::isValidString($authenticator_secret)) {
-                throw new ApiRequestException('invalid parameters in unlinkAccount()');
-            }
-            $params = $this->getParams();
-            $params['authenticator_secret'] = $authenticator_secret;
-            return $this->apiCall($params, 'unlink_account');
         }
 
         /**
