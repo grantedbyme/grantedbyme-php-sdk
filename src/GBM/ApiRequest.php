@@ -51,9 +51,14 @@ namespace GBM {
         // Two Factor Auth. Mode, Both Needed
         public static $MODE_2FA_STRICT = 4;
 
-        public static $TOKEN_ACCOUNT = 1;
-        public static $TOKEN_SESSION = 2;
-        public static $TOKEN_ACTIVATE = 4;
+        // Challenge used for account linking
+        public static $CHALLENGE_AUTHORIZE = 1;
+
+        // Challenge used to login users
+        public static $CHALLENGE_AUTHENTICATE = 2;
+
+        // Challenge used to register users
+        public static $CHALLENGE_PROFILE = 4;
 
         ////////////////////////////////////////
         // Private Variables
